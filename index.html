@@ -3,178 +3,130 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>재고·매출 대시보드</title>
+<title>병원 관리 대시보드</title>
 <script>
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOWDLhtGqHUHTdoZkxGCjUkUsdf3x_tbubxCfuU0NvzOL1qzhNTfuC4CKooZsRFY-G8g/exec";
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyiDxxP6SuMOfRxMB6kR67inzsmcselzKiHvLBPLd5y-P_jPyuVtuwtM0qhfnMjI7Pk/exec";
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-:root {
-  --bg     : #0b0e14; --surface: #131720; --card  : #1a2030;
-  --border : #252d3d; --accent : #4f8ef7; --accent2: #34d399;
-  --accent3: #f59e0b; --accent4: #f87171;
-  --text   : #e2e8f0; --muted  : #64748b;
-  --radius : 14px; --shadow: 0 4px 24px rgba(0,0,0,.45);
-}
+:root{--bg:#f0f4f8;--surface:#ffffff;--card:#ffffff;--border:#e2e8f0;--accent:#1F3864;--accent2:#17607A;--accent3:#1E6B3C;--accent4:#8B4000;--accent5:#4B3B8C;--text:#1e293b;--muted:#64748b;--danger:#ef4444;--warn:#f59e0b;--ok:#22c55e;--radius:14px;--shadow:0 2px 16px rgba(0,0,0,.08);}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-#loading{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
-.spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+#loading{position:fixed;inset:0;z-index:999;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 #loading p{color:var(--muted);font-size:.9rem}
 #app{display:none}
-header{position:sticky;top:0;z-index:100;background:rgba(11,14,20,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between}
-header h1{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:10px}
-header h1 span.logo{width:28px;height:28px;background:var(--accent);border-radius:7px;display:grid;place-items:center;font-size:.75rem;font-weight:900;color:#fff}
-#last-updated{font-size:.75rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
-main{max-width:1400px;margin:0 auto;padding:28px 24px 60px;display:grid;gap:24px}
-.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
-.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
-.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent-color,var(--accent));border-radius:var(--radius) var(--radius) 0 0}
-.kpi-card:hover{transform:translateY(-3px)}
-.kpi-label{font-size:.72rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
-.kpi-value{font-size:1.7rem;font-weight:900;font-family:'JetBrains Mono',monospace;line-height:1}
-.kpi-sub{font-size:.75rem;color:var(--muted);margin-top:6px}
-.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:20px}
-.chart-grid.wide{grid-template-columns:1fr}
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow)}
+header{background:var(--accent);color:#fff;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+header h1{font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:10px}
+.logo-icon{width:30px;height:30px;background:rgba(255,255,255,.2);border-radius:8px;display:grid;place-items:center;font-size:1rem}
+#last-updated{font-size:.72rem;opacity:.7;font-family:'JetBrains Mono',monospace}
+.tab-nav{background:#fff;border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:4px}
+.tab-btn{padding:14px 20px;font-size:.85rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;font-family:'Noto Sans KR',sans-serif}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:hover{color:var(--accent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+main{max-width:1440px;margin:0 auto;padding:24px 24px 60px}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border-top:4px solid var(--kpi-color,var(--accent));position:relative;overflow:hidden;transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px)}
+.kpi-icon{position:absolute;right:16px;top:16px;font-size:1.6rem;opacity:.15}
+.kpi-label{font-size:.72rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+.kpi-value{font-size:1.8rem;font-weight:900;font-family:'JetBrains Mono',monospace;color:var(--kpi-color,var(--accent));line-height:1}
+.kpi-sub{font-size:.72rem;color:var(--muted);margin-top:6px}
+.card{background:var(--card);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow);margin-bottom:20px}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.card-title{font-size:.9rem;font-weight:700}
-.card-badge{font-size:.68rem;padding:3px 9px;border-radius:99px;font-family:'JetBrains Mono',monospace;background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.25)}
-.chart-wrap{position:relative;height:260px}
-.chart-wrap.tall{height:320px}
+.card-title{font-size:.9rem;font-weight:700;color:var(--text)}
+.card-badge{font-size:.68rem;padding:3px 10px;border-radius:99px;font-family:'JetBrains Mono',monospace;background:rgba(31,56,100,.08);color:var(--accent);border:1px solid rgba(31,56,100,.15)}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:20px}
+.chart-wrap{position:relative;height:250px}
+.chart-wrap.tall{height:300px}
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.82rem}
-thead th{text-align:left;padding:8px 12px;font-size:.68rem;letter-spacing:.07em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
-tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
-tbody tr:hover{background:rgba(255,255,255,.03)}
+thead th{text-align:left;padding:9px 12px;font-size:.68rem;letter-spacing:.06em;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap;background:#f8fafc}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:hover{background:#f8fafc}
 tbody td{padding:9px 12px;white-space:nowrap}
-.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.68rem;font-weight:600;font-family:'JetBrains Mono',monospace}
-.badge-ok{background:rgba(52,211,153,.12);color:var(--accent2)}
-.badge-warn{background:rgba(245,158,11,.12);color:var(--accent3)}
-.badge-danger{background:rgba(248,113,113,.12);color:var(--accent4)}
-.badge-info{background:rgba(79,142,247,.12);color:var(--accent)}
-#error-banner{display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:var(--radius);padding:14px 18px;color:var(--accent4);font-size:.85rem}
-@media(max-width:900px){.chart-grid{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.badge{display:inline-block;padding:2px 9px;border-radius:6px;font-size:.68rem;font-weight:600;font-family:'JetBrains Mono',monospace}
+.badge-ok{background:rgba(34,197,94,.1);color:#16a34a}
+.badge-warn{background:rgba(245,158,11,.1);color:#d97706}
+.badge-danger{background:rgba(239,68,68,.1);color:#dc2626}
+.badge-info{background:rgba(31,56,100,.08);color:var(--accent)}
+.badge-purple{background:rgba(75,59,140,.1);color:#4B3B8C}
+.timeline{display:flex;flex-direction:column;gap:10px}
+.tl-item{display:flex;gap:14px;align-items:flex-start;padding:12px;border-radius:10px;background:#f8fafc;border-left:4px solid var(--tl-color,var(--accent))}
+.tl-time{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:700;color:var(--accent);min-width:48px}
+.tl-body{flex:1}
+.tl-name{font-weight:700;font-size:.88rem}
+.tl-sub{font-size:.75rem;color:var(--muted);margin-top:2px}
+#error-banner{display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--radius);padding:14px 18px;color:var(--danger);font-size:.85rem;margin-bottom:20px}
+.bkpi{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,1fr)}.tab-btn{padding:12px 12px;font-size:.78rem}}
 </style>
 </head>
 <body>
-<div id="loading">
-  <div class="spinner"></div>
-  <p>데이터 불러오는 중…</p>
-</div>
+<div id="loading"><div class="spinner"></div><p>데이터 불러오는 중…</p></div>
 <div id="app">
   <header>
-    <h1><span class="logo">재</span> 재고 · 매출 대시보드</h1>
+    <h1><span class="logo-icon">🏥</span> 병원 관리 대시보드</h1>
     <span id="last-updated">—</span>
   </header>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('overview',this)">📊 전체 현황</button>
+    <button class="tab-btn" onclick="switchTab('today',this)">📅 오늘 예약</button>
+    <button class="tab-btn" onclick="switchTab('records',this)">🩺 진료 기록</button>
+    <button class="tab-btn" onclick="switchTab('billing',this)">💰 수납 현황</button>
+  </div>
   <main>
     <div id="error-banner"></div>
-    <div class="kpi-row" id="kpi-row"></div>
-    <div class="chart-grid wide">
-      <div class="card">
-        <div class="card-header"><span class="card-title">📈 일별 매출 추이</span><span class="card-badge">Sales Trend</span></div>
-        <div class="chart-wrap tall"><canvas id="chartTrend"></canvas></div>
+    <div id="tab-overview" class="tab-panel active">
+      <div class="kpi-row" id="kpi-row"></div>
+      <div class="chart-grid">
+        <div class="card"><div class="card-header"><span class="card-title">📈 일별 예약 추이</span><span class="card-badge">Trend</span></div><div class="chart-wrap tall"><canvas id="chartTrend"></canvas></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">🔵 예약 상태 분포</span><span class="card-badge">Status</span></div><div class="chart-wrap tall"><canvas id="chartStatus"></canvas></div></div>
       </div>
+      <div class="chart-grid">
+        <div class="card"><div class="card-header"><span class="card-title">🏢 진료과별 예약</span><span class="card-badge">Dept</span></div><div class="chart-wrap"><canvas id="chartDept"></canvas></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">👨‍⚕️ 의사별 진료 수</span><span class="card-badge">Doctor</span></div><div class="chart-wrap"><canvas id="chartDoctor"></canvas></div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="card"><div class="card-header"><span class="card-title">🦠 진단명별 분포</span><span class="card-badge">Diagnosis</span></div><div class="chart-wrap"><canvas id="chartDiag"></canvas></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">💳 보험 유형별 환자</span><span class="card-badge">Insurance</span></div><div class="chart-wrap"><canvas id="chartIns"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-header"><span class="card-title">💵 월별 수익 현황</span><span class="card-badge">Revenue</span></div><div class="chart-wrap tall"><canvas id="chartRevenue"></canvas></div></div>
     </div>
-    <div class="chart-grid">
-      <div class="card">
-        <div class="card-header"><span class="card-title">🗂 카테고리별 매출</span><span class="card-badge">Category</span></div>
-        <div class="chart-wrap"><canvas id="chartCategory"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">📡 판매채널별 매출</span><span class="card-badge">Channel</span></div>
-        <div class="chart-wrap"><canvas id="chartChannel"></canvas></div>
-      </div>
+    <div id="tab-today" class="tab-panel">
+      <div class="card"><div class="card-header"><span class="card-title">📅 오늘 예약 일정</span><span class="card-badge" id="today-badge">—</span></div><div class="timeline" id="today-timeline"></div></div>
     </div>
-    <div class="chart-grid">
-      <div class="card">
-        <div class="card-header"><span class="card-title">🏆 제품별 매출 Top 10</span><span class="card-badge">Products</span></div>
-        <div class="chart-wrap tall"><canvas id="chartProducts"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">🗺 지역별 매출</span><span class="card-badge">Region</span></div>
-        <div class="chart-wrap"><canvas id="chartRegion"></canvas></div>
-      </div>
+    <div id="tab-records" class="tab-panel">
+      <div class="card"><div class="card-header"><span class="card-title">🩺 최근 진료 기록</span><span class="card-badge">Records</span></div><div class="table-wrap" id="tbl-records"></div></div>
     </div>
-    <div class="card">
-      <div class="card-header"><span class="card-title">📦 재고 현황</span><span class="card-badge">Inventory</span></div>
-      <div class="table-wrap" id="tbl-inventory"></div>
-    </div>
-    <div class="card">
-      <div class="card-header"><span class="card-title">🧾 최근 매출 (최신 20건)</span><span class="card-badge">Recent Sales</span></div>
-      <div class="table-wrap" id="tbl-sales"></div>
+    <div id="tab-billing" class="tab-panel">
+      <div class="bkpi" id="billing-kpi"></div>
+      <div class="card"><div class="card-header"><span class="card-title">⚠️ 미납 현황</span><span class="card-badge">Unpaid</span></div><div class="table-wrap" id="tbl-unpaid"></div></div>
+      <div class="card"><div class="card-header"><span class="card-title">✅ 전체 청구 내역</span><span class="card-badge">Billing</span></div><div class="table-wrap" id="tbl-billing"></div></div>
     </div>
   </main>
 </div>
 <script>
-const fmt  = n => new Intl.NumberFormat('ko-KR').format(Math.round(n));
-const fmtW = n => fmt(n) + ' 원';
-const C = ['#4f8ef7','#34d399','#f59e0b','#f87171','#a78bfa','#38bdf8','#fb923c','#e879f9','#84cc16','#2dd4bf'];
-Chart.defaults.color = '#64748b';
-Chart.defaults.borderColor = '#252d3d';
-Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
-Chart.defaults.font.size = 11;
-function renderKPI(s) {
-  const cards = [
-    {label:'총 매출액',    value:fmtW(s.totalRevenue),    sub:'주문 '+fmt(s.totalOrders)+'건', color:'#4f8ef7'},
-    {label:'총 판매수량',  value:fmt(s.totalQty)+'개',     sub:'전체 출고 기준',                color:'#34d399'},
-    {label:'평균 주문금액',value:fmtW(s.avgOrderValue),   sub:'주문건당',                      color:'#f59e0b'},
-    {label:'총 입고금액',  value:fmtW(s.totalInbound),    sub:'입고 금액 기준',                color:'#a78bfa'},
-    {label:'총 출고건수',  value:fmt(s.totalOutbound)+'건',sub:'전 유형 포함',                 color:'#38bdf8'},
-    {label:'재주문 필요',  value:s.reorderNeeded+'품목',   sub:'안전재고 미달',                 color:s.reorderNeeded>0?'#f87171':'#34d399'},
-  ];
-  document.getElementById('kpi-row').innerHTML = cards.map(c=>`
-    <div class="kpi-card" style="--accent-color:${c.color}">
-      <div class="kpi-label">${c.label}</div>
-      <div class="kpi-value" style="color:${c.color}">${c.value}</div>
-      <div class="kpi-sub">${c.sub}</div>
-    </div>`).join('');
-}
-function lineChart(id,labels,values){
-  new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:[{label:'매출',data:values,borderColor:'#4f8ef7',backgroundColor:'rgba(79,142,247,.15)',borderWidth:2.5,pointRadius:3,tension:.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmtW(ctx.raw)}}},scales:{x:{grid:{color:'#1e2736'},ticks:{maxTicksLimit:10}},y:{grid:{color:'#1e2736'},ticks:{callback:v=>fmt(v/10000)+'만'}}}}});
-}
-function barChart(id,labels,values,horizontal=false){
-  new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data:values,backgroundColor:C.slice(0,values.length).map(c=>c+'cc'),borderColor:C.slice(0,values.length),borderWidth:1.5,borderRadius:6}]},options:{indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmtW(ctx.raw)}}},scales:{x:{grid:{color:'#1e2736'},ticks:{callback:horizontal?(v=>fmt(v/10000)+'만'):undefined}},y:{grid:{color:'#1e2736'},ticks:{callback:!horizontal?(v=>fmt(v/10000)+'만'):undefined}}}}});
-}
-function doughnutChart(id,labels,values){
-  new Chart(document.getElementById(id),{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:C.slice(0,values.length).map(c=>c+'cc'),borderColor:'#131720',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'right',labels:{boxWidth:12,padding:14}},tooltip:{callbacks:{label:ctx=>' '+fmtW(ctx.raw)}}}}});
-}
-function renderInventoryTable(inv){
-  const badge=s=>s==='정상'?`<span class="badge badge-ok">${s}</span>`:s==='주의'?`<span class="badge badge-warn">${s}</span>`:`<span class="badge badge-danger">${s}</span>`;
-  document.getElementById('tbl-inventory').innerHTML=`<table><thead><tr><th>제품코드</th><th>제품명</th><th>카테고리</th><th>총입고</th><th>총출고</th><th>현재재고</th><th>안전재고</th><th>상태</th></tr></thead><tbody>${inv.map(r=>`<tr><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${r.code}</td><td style="font-weight:600">${r.name}</td><td>${r.category}</td><td>${fmt(r.inbound)}</td><td>${fmt(r.outbound)}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${fmt(r.current)}</td><td style="color:var(--muted)">${fmt(r.safety)}</td><td>${badge(r.status)}</td></tr>`).join('')}</tbody></table>`;
-}
-function renderSalesTable(sales){
-  document.getElementById('tbl-sales').innerHTML=`<table><thead><tr><th>주문번호</th><th>주문일자</th><th>제품명</th><th>카테고리</th><th>수량</th><th>단가</th><th>할인율</th><th>판매금액</th><th>지역</th><th>판매채널</th><th>담당자</th></tr></thead><tbody>${sales.map(r=>{const disc=Number(r['할인율']||0);const discBadge=disc>0?`<span class="badge badge-warn">${(disc*100).toFixed(0)}%</span>`:`<span class="badge badge-info">0%</span>`;return`<tr><td style="font-family:'JetBrains Mono',monospace;color:var(--muted);font-size:.75rem">${r['주문번호']}</td><td style="font-family:'JetBrains Mono',monospace;font-size:.78rem">${r['주문일자']}</td><td style="font-weight:600">${r['제품명']}</td><td>${r['카테고리']||''}</td><td>${fmt(r['수량']||0)}</td><td>${fmtW(r['단가']||0)}</td><td>${discBadge}</td><td style="font-weight:700;color:var(--accent2)">${fmtW(r['판매금액']||0)}</td><td>${r['지역']||''}</td><td>${r['판매채널']||''}</td><td style="color:var(--muted)">${r['담당자']||''}</td></tr>`;}).join('')}</tbody></table>`;
-}
-async function init(){
-  try{
-    const res=await fetch(WEB_APP_URL+'?action=all');
-    const json=await res.json();
-    if(json.status!=='ok') throw new Error(json.message||'데이터 오류');
-    const d=json.data;
-    renderKPI(d.summary);
-    lineChart('chartTrend',d.salesTrend.map(r=>r.date),d.salesTrend.map(r=>r.amount));
-    barChart('chartCategory',d.salesByCategory.map(r=>r.category),d.salesByCategory.map(r=>r.amount));
-    doughnutChart('chartChannel',d.salesByChannel.map(r=>r.channel),d.salesByChannel.map(r=>r.amount));
-    barChart('chartProducts',d.topProducts.map(r=>r.name),d.topProducts.map(r=>r.amount),true);
-    barChart('chartRegion',d.salesByRegion.map(r=>r.region),d.salesByRegion.map(r=>r.amount));
-    renderInventoryTable(d.inventorySummary);
-    renderSalesTable(d.recentSales);
-    document.getElementById('last-updated').textContent='업데이트: '+new Date().toLocaleTimeString('ko-KR');
-    document.getElementById('loading').style.display='none';
-    document.getElementById('app').style.display='block';
-  }catch(err){
-    showError('데이터 로딩 실패: '+err.message);
-  }
-}
-function showError(msg){
-  document.getElementById('loading').style.display='none';
-  document.getElementById('app').style.display='block';
-  const b=document.getElementById('error-banner');
-  b.textContent=msg;b.style.display='block';
-}
+const fmt=n=>new Intl.NumberFormat('ko-KR').format(Math.round(n));
+const fmtW=n=>fmt(n)+' 원';
+const C=['#1F3864','#17607A','#1E6B3C','#8B4000','#4B3B8C','#c2410c','#0369a1','#7c3aed','#b45309','#0f766e'];
+Chart.defaults.color='#64748b';Chart.defaults.borderColor='#e2e8f0';Chart.defaults.font.family="'Noto Sans KR',sans-serif";Chart.defaults.font.size=11;
+function switchTab(id,btn){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');btn.classList.add('active');}
+function renderKPI(s){const cards=[{label:'총 예약 건수',value:fmt(s.totalAppts)+'건',sub:'전체 기간',color:'#1F3864',icon:'📋'},{label:'진료 완료',value:fmt(s.completedAppts)+'건',sub:`완료율 ${s.completionRate}%`,color:'#1E6B3C',icon:'✅'},{label:'취소/노쇼',value:fmt(s.cancelledAppts+s.noShowAppts)+'건',sub:`취소 ${s.cancelledAppts}/노쇼 ${s.noShowAppts}`,color:'#ef4444',icon:'❌'},{label:'등록 환자',value:fmt(s.totalPatients)+'명',sub:'전체 등록',color:'#17607A',icon:'👥'},{label:'총 수익',value:fmtW(s.totalRevenue),sub:'본인부담금',color:'#8B4000',icon:'💰'},{label:'미납 건수',value:fmt(s.unpaidCount)+'건',sub:'납부 필요',color:s.unpaidCount>0?'#ef4444':'#1E6B3C',icon:'⚠️'}];document.getElementById('kpi-row').innerHTML=cards.map(c=>`<div class="kpi-card" style="--kpi-color:${c.color}"><div class="kpi-icon">${c.icon}</div><div class="kpi-label">${c.label}</div><div class="kpi-value">${c.value}</div><div class="kpi-sub">${c.sub}</div></div>`).join('');}
+function lineChart(id,labels,datasets){new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:datasets.map((d,i)=>({label:d.label,data:d.data,borderColor:C[i],backgroundColor:C[i]+'22',borderWidth:2,pointRadius:3,tension:.4,fill:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{x:{grid:{color:'#f1f5f9'},ticks:{maxTicksLimit:10}},y:{grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'건'}}}}});}
+function barChart(id,labels,values,horizontal=false){new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data:values,backgroundColor:C.slice(0,values.length).map(c=>c+'cc'),borderColor:C.slice(0,values.length),borderWidth:1.5,borderRadius:6}]},options:{indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},spaces:{x:{grid:{color:'#f1f5f9'}},y:{grid:{color:'#f1f5f9'}}}}});}
+function doughnutChart(id,labels,values){new Chart(document.getElementById(id),{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:C.slice(0,values.length).map(c=>c+'cc'),borderColor:'#ffffff',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{boxWidth:12,padding:14}}}}});}
+function barRevenueChart(id,labels,values){new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{label:'월별 수익',data:values,backgroundColor:'#1F3864cc',borderColor:'#1F3864',borderWidth:1.5,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmtW(ctx.raw)}}},scales:{x:{grid:{color:'#f1f5f9'}},y:{grid:{color:'#f1f5f9'},ticks:{callback:v=>fmt(v/10000)+'만'}}}}});}
+function renderToday(appts){document.getElementById('today-badge').textContent=appts.length+'건';const cm={'예약완료':'#17607A','진료완료':'#1E6B3C','취소':'#ef4444','노쇼':'#f59e0b'};if(!appts.length){document.getElementById('today-timeline').innerHTML='<p style="color:var(--muted);padding:20px;text-align:center">오늘 예약이 없습니다.</p>';return;}document.getElementById('today-timeline').innerHTML=appts.map(r=>`<div class="tl-item" style="--tl-color:${cm[r['상태']]||'#1F3864'}"><div class="tl-time">${r['예약시간']}</div><div class="tl-body"><div class="tl-name">${r['환자명']} <span class="badge badge-info">${r['진료과']}</span></div><div class="tl-sub">담당: ${r['의사명']} · 증상: ${r['증상']} · 상태: ${r['상태']}</div></div></div>`).join('');}
+function renderRecords(records){document.getElementById('tbl-records').innerHTML=`<table><thead><tr><th>기록번호</th><th>환자명</th><th>의사번호</th><th>진료일</th><th>주증상</th><th>진단명</th><th>처방약</th><th>처방일수</th></tr></thead><tbody>${records.map(r=>`<tr><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${r['기록번호']}</td><td style="font-weight:700">${r['환자명']}</td><td style="color:var(--muted)">${r['의사번호']}</td><td style="font-family:'JetBrains Mono',monospace">${String(r['진료일']).slice(0,10)}</td><td>${r['주증상']}</td><td><span class="badge badge-purple">${r['진단명']}</span></td><td>${r['처방약']}</td><td style="text-align:center">${r['처방일수']}일</td></tr>`).join('')}</tbody></table>`;}
+function renderBilling(billing,unpaid){const tr=billing.reduce((s,r)=>s+(Number(r['본인부담금'])||0),0);const pr=billing.filter(r=>r['납부상태']==='납부완료').reduce((s,r)=>s+(Number(r['본인부담금'])||0),0);const ur=billing.filter(r=>r['납부상태']==='미납').reduce((s,r)=>s+(Number(r['본인부담금'])||0),0);document.getElementById('billing-kpi').innerHTML=[{label:'총 청구 금액',value:fmtW(tr),color:'#1F3864',icon:'💳'},{label:'납부 완료',value:fmtW(pr),color:'#1E6B3C',icon:'✅'},{label:'미납 금액',value:fmtW(ur),color:'#ef4444',icon:'⚠️'},{label:'미납 건수',value:fmt(unpaid.length)+'건',color:unpaid.length>0?'#ef4444':'#1E6B3C',icon:'📋'}].map(c=>`<div class="kpi-card" style="--kpi-color:${c.color}"><div class="kpi-icon">${c.icon}</div><div class="kpi-label">${c.label}</div><div class="kpi-value">${c.value}</div></div>`).join('');document.getElementById('tbl-unpaid').innerHTML=unpaid.length?`<table><thead><tr><th>청구번호</th><th>환자명</th><th>진료일</th><th>진료과</th><th>진료비</th><th>보험공제</th><th>본인부담금</th><th>상태</th></tr></thead><tbody>${unpaid.map(r=>`<tr><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${r['청구번호']}</td><td style="font-weight:700">${r['환자명']}</td><td>${String(r['진료일']).slice(0,10)}</td><td>${r['진료과']}</td><td>${fmtW(r['진료비'])}</td><td style="color:var(--muted)">${fmtW(r['보험공제'])}</td><td style="font-weight:700;color:#ef4444">${fmtW(r['본인부담금'])}</td><td><span class="badge badge-danger">미납</span></td></tr>`).join('')}</tbody></table>`:'<p style="color:var(--muted);padding:20px;text-align:center">미납 건수가 없습니다. ✅</p>';document.getElementById('tbl-billing').innerHTML=`<table><thead><tr><th>청구번호</th><th>환자명</th><th>진료일</th><th>진료과</th><th>진료비</th><th>보험공제</th><th>본인부담금</th><th>납부상태</th></tr></thead><tbody>${billing.map(r=>`<tr><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${r['청구번호']}</td><td style="font-weight:700">${r['환자명']}</td><td>${String(r['진료일']).slice(0,10)}</td><td>${r['진료과']}</td><td>${fmtW(r['진료비'])}</td><td style="color:var(--muted)">${fmtW(r['보험공제'])}</td><td style="font-weight:700">${fmtW(r['본인부담금'])}</td><td>${r['납부상태']==='납부완료'?'<span class="badge badge-ok">납부완료</span>':'<span class="badge badge-danger">미납</span>'}</td></tr>`).join('')}</tbody></table>`;}
+async function init(){try{const res=await fetch(WEB_APP_URL+'?action=all');const json=await res.json();if(json.status!=='ok')throw new Error(json.message||'데이터 오류');const d=json.data;renderKPI(d.summary);lineChart('chartTrend',d.apptTrend.map(r=>r.date),[{label:'진료완료',data:d.apptTrend.map(r=>r['진료완료']||0)},{label:'예약완료',data:d.apptTrend.map(r=>r['예약완료']||0)},{label:'취소',data:d.apptTrend.map(r=>r['취소']||0)},{label:'노쇼',data:d.apptTrend.map(r=>r['노쇼']||0)}]);doughnutChart('chartStatus',d.apptByStatus.map(r=>r.status),d.apptByStatus.map(r=>r.count));barChart('chartDept',d.apptByDept.map(r=>r.dept),d.apptByDept.map(r=>r.count));barChart('chartDoctor',d.apptByDoctor.map(r=>r.doctor),d.apptByDoctor.map(r=>r.count),true);barChart('chartDiag',d.diagDistribution.map(r=>r.diagnosis),d.diagDistribution.map(r=>r.count),true);doughnutChart('chartIns',d.patientsByInsurance.map(r=>r.type),d.patientsByInsurance.map(r=>r.count));barRevenueChart('chartRevenue',d.monthlyRevenue.map(r=>r.month),d.monthlyRevenue.map(r=>r.revenue));renderToday(d.todayAppts);const bill=await fetchBilling();renderRecords(d.recentRecords);renderBilling(bill,d.unpaidBills);document.getElementById('last-updated').textContent='업데이트: '+new Date().toLocaleTimeString('ko-KR');document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';}catch(err){showError('데이터 로딩 실패: '+err.message);}}
+async function fetchBilling(){const res=await fetch(WEB_APP_URL+'?action=billing');const json=await res.json();return json.status==='ok'?json.data:[];}
+function showError(msg){document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';const b=document.getElementById('error-banner');b.textContent=msg;b.style.display='block';}
 window.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
