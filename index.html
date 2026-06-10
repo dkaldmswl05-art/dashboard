@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>병원 관리 대시보드 v2</title>
+<script>
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw69fJHnQdBPghgA7tEwON4_uVdyeHpz9Yf5bpror6m0eEjWE2HdklUeU-tZv2YWpCT/exec";
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f4f8;--card:#fff;--border:#e2e8f0;--accent:#1F3864;--accent2:#17607A;--accent3:#1E6B3C;--accent4:#8B4000;--accent5:#4B3B8C;--text:#1e293b;--muted:#64748b;--danger:#ef4444;--radius:14px;--shadow:0 2px 16px rgba(0,0,0,.08);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+#loading{position:fixed;inset:0;z-index:999;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{color:var(--muted);font-size:.9rem}
+#app{display:none}
+header{background:var(--accent);color:#fff;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+header h1{font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:10px}
+.logo-icon{width:30px;height:30px;background:rgba(255,255,255,.2);border-radius:8px;display:grid;place-items:center}
+#last-updated{font-size:.72rem;opacity:.7;font-family:'JetBrains Mono',monospace}
+.tab-nav{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:2px;overflow-x:auto}
+.tab-btn{padding:12px 16px;font-size:.82rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;font-family:'Noto Sans KR',sans-serif;white-space:nowrap}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+main{max-width:1440px;margin:0 auto;padding:20px 20px 60px}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border-top:4px solid var(--kpi-color,var(--accent));position:relative;overflow:hidden;transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px)}
+.kpi-icon{position:absolute;right:14px;top:14px;font-size:1.5rem;opacity:.12}
+.kpi-label{font-size:.7rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.kpi-value{font-size:1.6rem;font-weight:900;font-family:'JetBrains Mono',monospace;color:var(--kpi-color,var(--accent));line-height:1}
+.kpi-sub{font-size:.7rem;color:var(--muted);margin-top:4px}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:18px;margin-bottom:18px}
+.chart-grid.wide{grid-template-columns:1fr}
+.card{background:var(--card);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);margin-bottom:18px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+.card-title{font-size:.88rem;font-weight:700}
+.card-badge{font-size:.66rem;padding:2px 9px;border-radius:99px;font-family:'JetBrains Mono',monospace;background:rgba(31,56,100,.08);color:var(--accent);border:1px solid rgba(31,56,100,.15)}
+.chart-wrap{position:relative;height:240px}.chart-wrap.tall{height:290px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+thead th{text-align:left;padding:8px 10px;font-size:.66rem;letter-spacing:.06em;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap;background:#f8fafc}
+tbody tr{border-bottom:1px solid var(--border)}tbody tr:hover{background:#f8fafc}
+tbody td{padding:8px 10px;white-space:nowrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.66rem;font-weight:600;font-family:'JetBrains Mono',monospace}
+.badge-ok{background:rgba(34,197,94,.1);color:#16a34a}.badge-danger{background:rgba(239,68,68,.1);color:#dc2626}
+.badge-info{background:rgba(31,56,100,.08);color:var(--accent)}.badge-purple{background:rgba(75,59,140,.1);color:#4B3B8C}
+.timeline{display:flex;flex-direction:column;gap:8px}
+.tl-item{display:flex;gap:12px;align-items:flex-start;padding:10px;border-radius:10px;background:#f8fafc;border-left:4px solid var(--tl-color,var(--accent))}
+.tl-time{font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:700;color:var(--accent);min-width:44px}
+.tl-name{font-weight:700;font-size:.86rem}.tl-sub{font-size:.73rem;color:var(--muted);margin-top:2px}
+.search-box{display:flex;gap:10px;margin-bottom:16px}
+.search-input{flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:.88rem;font-family:'Noto Sans KR',sans-serif;outline:none}
+.search-input:focus{border-color:var(--accent)}
+.search-btn{padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+.search-result{background:#f8fafc;border-radius:var(--radius);padding:16px;margin-bottom:12px;border-left:4px solid var(--accent)}
+.search-result h3{font-size:.9rem;font-weight:700;margin-bottom:10px;color:var(--accent)}
+.cal-nav{display:flex;gap:8px;align-items:center}
+.cal-nav button{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:.82rem}
+.cal-nav span{font-size:.9rem;font-weight:700;min-width:100px;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day-label{text-align:center;font-size:.7rem;font-weight:700;color:var(--muted);padding:4px}
+.cal-cell{min-height:60px;background:#f8fafc;border-radius:8px;padding:6px;font-size:.72rem;border:1px solid var(--border)}
+.cal-cell.today{border:2px solid var(--accent)}.cal-cell.has-appt{background:#EEF3FB}.cal-cell.other-month{opacity:.35}
+.cal-date{font-weight:700;font-size:.75rem;margin-bottom:3px}.cal-dot{font-size:.68rem;color:var(--accent)}
+.doctor-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.doctor-card{background:#f8fafc;border-radius:12px;padding:14px;border:1px solid var(--border)}
+.doctor-name{font-weight:700;font-size:.9rem;margin-bottom:4px}.doctor-dept{font-size:.75rem;color:var(--muted);margin-bottom:8px}
+.doctor-stat{display:flex;gap:8px}.doctor-stat span{font-size:.72rem;padding:2px 8px;border-radius:6px;background:rgba(31,56,100,.08);color:var(--accent)}
+.csv-btn{padding:7px 14px;background:var(--accent3);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+.bkpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+#error-banner{display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--radius);padding:14px 18px;color:var(--danger);font-size:.85rem;margin-bottom:18px}
+@media(max-width:900px){.chart-grid,.chart-grid.wide{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,1fr)}.bkpi{grid-template-columns:repeat(2,1fr)}.doctor-cards{grid-template-columns:1fr 1fr}}
+</style></head>
+<body>
+<div id="loading"><div class="spinner"></div><p>데이터 불러오는 중…</p></div>
+<div id="app">
+<header><h1><span class="logo-icon">🏥</span> 병원 관리 대시보드</h1><span id="last-updated">—</span></header>
+<div class="tab-nav">
+<button class="tab-btn active" onclick="switchTab('overview',this)">📊 전체 현황</button>
+<button class="tab-btn" onclick="switchTab('today',this)">📅 오늘 예약</button>
+<button class="tab-btn" onclick="switchTab('calendar',this)">🗓 캘린더</button>
+<button class="tab-btn" onclick="switchTab('doctors',this)">👨‍⚕️ 의사 스케줄</button>
+<button class="tab-btn" onclick="switchTab('search',this)">🔍 환자 검색</button>
+<button class="tab-btn" onclick="switchTab('records',this)">🩺 진료 기록</button>
+<button class="tab-btn" onclick="switchTab('billing',this)">💰 수납 현황</button>
+</div>
+<main>
+<div id="error-banner"></div>
+<div id="tab-overview" class="tab-panel active">
+<div class="kpi-row" id="kpi-row"></div>
+<div class="chart-grid">
+<div class="card"><div class="card-header"><span class="card-title">📈 일별 예약 추이</span><span class="card-badge">Trend</span></div><div class="chart-wrap tall"><canvas id="chartTrend"></canvas></div></div>
+<div class="card"><div class="card-header"><span class="card-title">🔵 예약 상태 분포</span><span class="card-badge">Status</span></div><div class="chart-wrap tall"><canvas id="chartStatus"></canvas></div></div>
+</div>
+<div class="chart-grid">
+<div class="card"><div class="card-header"><span class="card-title">🏢 진료과별 예약</span><span class="card-badge">Dept</span></div><div class="chart-wrap"><canvas id="chartDept"></canvas></div></div>
+<div class="card"><div class="card-header"><span class="card-title">👨‍⚕️ 의사별 진료 수</span><span class="card-badge">Doctor</span></div><div class="chart-wrap"><canvas id="chartDoctor"></canvas></div></div>
+</div>
+<div class="chart-grid">
+<div class="card"><div class="card-header"><span class="card-title">🦠 진단명별 분포</span><span class="card-badge">Diagnosis</span></div><div class="chart-wrap"><canvas id="chartDiag"></canvas></div></div>
+<div class="card"><div class="card-header"><span class="card-title">💊 처방약별 통계</span><span class="card-badge">Drug</span></div><div class="chart-wrap"><canvas id="chartDrug"></canvas></div></div>
+</div>
+<div class="chart-grid">
+<div class="card"><div class="card-header"><span class="card-title">👤 연령대별 환자</span><span class="card-badge">Age</span></div><div class="chart-wrap"><canvas id="chartAge"></canvas></div></div>
+<div class="card"><div class="card-header"><span class="card-title">⚧ 성별 분포</span><span class="card-badge">Gender</span></div><div class="chart-wrap"><canvas id="chartGender"></canvas></div></div>
+</div>
+<div class="chart-grid wide">
+<div class="card"><div class="card-header"><span class="card-title">💵 월별 수익 현황</span><span class="card-badge">Revenue</span></div><div class="chart-wrap tall"><canvas id="chartRevenue"></canvas></div></div>
+</div>
+</div>
+<div id="tab-today" class="tab-panel"><div class="card"><div class="card-header"><span class="card-title">📅 오늘 예약 일정</span><span class="card-badge" id="today-badge">—</span></div><div class="timeline" id="today-timeline"></div></div></div>
+<div id="tab-calendar" class="tab-panel"><div class="card"><div class="card-header"><span class="card-title">🗓 월간 예약 캘린더</span><div class="cal-nav"><button onclick="changeMonth(-1)">◀</button><span id="cal-month-label">—</span><button onclick="changeMonth(1)">▶</button></div></div><div class="cal-grid" id="cal-day-labels"></div><div class="cal-grid" id="cal-grid" style="margin-top:4px"></div></div></div>
+<div id="tab-doctors" class="tab-panel"><div class="card"><div class="card-header"><span class="card-title">👨‍⚕️ 의사별 스케줄 및 실적</span><span class="card-badge">Schedule</span></div><div class="doctor-cards" id="doctor-cards"></div></div><div class="card"><div class="card-header"><span class="card-title">📋 의사 정보</span><span class="card-badge">Doctors</span></div><div class="table-wrap" id="tbl-doctors"></div></div></div>
+<div id="tab-search" class="tab-panel"><div class="card"><div class="card-header"><span class="card-title">🔍 환자 검색</span><span class="card-badge">Search</span></div><div class="search-box"><input class="search-input" id="search-input" placeholder="환자명, 환자번호, 연락처로 검색" onkeydown="if(event.key==='Enter')doSearch()"/><button class="search-btn" onclick="doSearch()">검색</button></div><div id="search-results"></div></div><div class="card"><div class="card-header"><span class="card-title">👥 전체 환자 목록</span><button class="csv-btn" onclick="exportCSV('patients')">📤 CSV 내보내기</button></div><div class="table-wrap" id="tbl-patients"></div></div></div>
+<div id="tab-records" class="tab-panel"><div class="card"><div class="card-header"><span class="card-title">🩺 진료 기록</span><button class="csv-btn" onclick="exportCSV('records')">📤 CSV 내보내기</button></div><div class="table-wrap" id="tbl-records"></div></div></div>
+<div id="tab-billing" class="tab-panel"><div class="bkpi" id="billing-kpi"></div><div class="card"><div class="card-header"><span class="card-title">⚠️ 미납 현황</span><span class="card-badge">Unpaid</span></div><div class="table-wrap" id="tbl-unpaid"></div></div><div class="card"><div class="card-header"><span class="card-title">✅ 전체 청구 내역</span><button class="csv-btn" onclick="exportCSV('billing')">📤 CSV 내보내기</button></div><div class="table-wrap" id="tbl-billing"></div></div></div>
+</main></div>
+<script>
+let G={};let calYear=new Date().getFullYear();let calMonth=new Date().getMonth();
+const fmt=n=>new Intl.NumberFormat('ko-KR').format(Math.round(n));
+const fmtW=n=>fmt(n)+' 원';
+const C=['#1F3864','#17607A','#1E6B3C','#8B4000','#4B3B8C','#c2410c','#0369a1','#7c3aed','#b45309','#0f766e'];
+Chart.defaults.color='#64748b';Chart.defaults.borderColor='#e2e8f0';
+Chart.defaults.font.family="'Noto Sans KR', sans-serif";Chart.defaults.font.size=11;
+function switchTab(id,btn){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');btn.classList.add('active');}
+function renderKPI(s){const cards=[{label:'총 예약',value:fmt(s.totalAppts)+'건',sub:'전체 기간',color:'#1F3864',icon:'📋'},{label:'진료 완료',value:fmt(s.completedAppts)+'건',sub:`완료율 ${s.completionRate}%`,color:'#1E6B3C',icon:'✅'},{label:'취소/노쇼',value:fmt(s.cancelledAppts+s.noShowAppts)+'건',sub:`취소${s.cancelledAppts}/노쇼${s.noShowAppts}`,color:'#ef4444',icon:'❌'},{label:'등록 환자',value:fmt(s.totalPatients)+'명',sub:'전체 등록',color:'#17607A',icon:'👥'},{label:'총 수익',value:fmtW(s.totalRevenue),sub:'본인부담금',color:'#8B4000',icon:'💰'},{label:'미납',value:fmt(s.unpaidCount)+'건',sub:'납부 필요',color:s.unpaidCount>0?'#ef4444':'#1E6B3C',icon:'⚠️'}];document.getElementById('kpi-row').innerHTML=cards.map(c=>`<div class="kpi-card" style="--kpi-color:${c.color}"><div class="kpi-icon">${c.icon}</div><div class="kpi-label">${c.label}</div><div class="kpi-value">${c.value}</div><div class="kpi-sub">${c.sub}</div></div>`).join('');}
+function lineChart(id,labels,datasets){new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:datasets.map((d,i)=>({label:d.label,data:d.data,borderColor:C[i],backgroundColor:C[i]+'22',borderWidth:2,pointRadius:2,tension:.4,fill:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{x:{grid:{color:'#f1f5f9'},ticks:{maxTicksLimit:10}},y:{grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'건'}}}}});}
+function barChart(id,labels,values,horizontal=false){new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data:values,backgroundColor:C.slice(0,values.length).map(c=>c+'cc'),borderColor:C.slice(0,values.length),borderWidth:1.5,borderRadius:6}]},options:{indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f1f5f9'}},y:{grid:{color:'#f1f5f9'}}}}});}
+function doughnutChart(id,labels,values){new Chart(document.getElementById(id),{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:C.slice(0,values.length).map(c=>c+'cc'),borderColor:'#fff',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{boxWidth:12,padding:12}}}}});}
+function revenueChart(id,labels,values){new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{label:'월별 수익',data:values,backgroundColor:'#1F3864cc',borderColor:'#1F3864',borderWidth:1.5,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmtW(ctx.raw)}}},scales:{x:{grid:{color:'#f1f5f9'}},y:{grid:{color:'#f1f5f9'},ticks:{callback:v=>fmt(v/10000)+'만'}}}}});}
+function renderToday(appts){document.getElementById('today-badge').textContent=appts.length+'건';const cm={'예약완료':'#17607A','진료완료':'#1E6B3C','취소':'#ef4444','노쇼':'#f59e0b'};document.getElementById('today-timeline').innerHTML=appts.length?appts.map(r=>`<div class="tl-item" style="--tl-color:${cm[r['상태']]||'#1F3864'}"><div class="tl-time">${r['예약시간']}</div><div class="tl-body"><div class="tl-name">${r['환자명']} <span class="badge badge-info">${r['진료과']}</span></div><div class="tl-sub">담당: ${r['의사명']} · 증상: ${r['증상']} · 상태: ${r['상태']}</div></div></div>`).join(''):'<p style="color:var(--muted);padding:20px;text-align:center">오늘 예약이 없습니다.</p>';}
+function renderCalendar(){const labels=['일','월','화','수','목','금','토'];document.getElementById('cal-day-labels').innerHTML=labels.map(d=>`<div class="cal-day-label">${d}</div>`).join('');document.getElementById('cal-month-label').textContent=`${calYear}년 ${calMonth+1}월`;const today=new Date().toISOString().slice(0,10);const firstDay=new Date(calYear,calMonth,1).getDay();const daysInMonth=new Date(calYear,calMonth+1,0).getDate();const calMap={};(G.calendarData||[]).forEach(r=>{calMap[r.date]=r;});let cells='';for(let i=0;i<firstDay;i++)cells+=`<div class="cal-cell other-month"></div>`;for(let d=1;d<=daysInMonth;d++){const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const info=calMap[dateStr];const isToday=dateStr===today;cells+=`<div class="cal-cell${info?' has-appt':''}${isToday?' today':''}"><div class="cal-date">${d}</div>${info?`<div class="cal-dot">📋 ${info.total}건</div>${info.done?`<div class="cal-dot" style="color:#1E6B3C">✅ ${info.done}</div>`:''}${info.cancelled?`<div class="cal-dot" style="color:#ef4444">❌ ${info.cancelled}</div>`:''}`:''}</div>`;}document.getElementById('cal-grid').innerHTML=cells;}
+function changeMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function renderDoctors(schedule){document.getElementById('doctor-cards').innerHTML=schedule.map(d=>`<div class="doctor-card"><div class="doctor-name">👨‍⚕️ ${d['이름']}</div><div class="doctor-dept">${d['전공']} · ${d['진료요일']}</div><div class="doctor-stat"><span>오늘 ${d.todayCount}건</span><span>누계 ${d.totalDone}건</span></div><div style="margin-top:8px;font-size:.7rem;color:var(--muted)">${d['진료시간']}</div></div>`).join('');document.getElementById('tbl-doctors').innerHTML=`<table><thead><tr><th>의사번호</th><th>이름</th><th>전공</th><th>면허번호</th><th>진료요일</th><th>진료시간</th><th>상태</th><th>오늘 예약</th><th>누계 진료</th></tr></thead><tbody>${schedule.map(d=>`<tr><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${d['의사번호']}</td><td style="font-weight:700">${d['이름']}</td><td>${d['전공']}</td><td style="font-family:'JetBrains Mono',monospace;font-size:.75rem">${d['면허번호']}</td><td>${d['진료요일']}</td><td>${d['진료시간']}</td><td><span class="badge badge-ok">${d['상태']}</span></td><td style="text-align:center;font-weight:700;color:var(--accent)">${d.todayCount}건</td><td style="text-align:center">${d.totalDone}건</td></tr>`).join('')}</tbody></table>`;}
+function doSearch(){const q=document.getElementById('search-input').value.trim();if(!q)return;const patients=G.allPatients||[],appts=G.allAppts||[],records=G.allRecords||[],billing=G.allBilling||[];const matched=patients.filter(p=>String(p['이름']).includes(q)||String(p['환자번호']).toLowerCase().includes(q.toLowerCase())||String(p['연락처']).includes(q));const el=document.getElementById('search-results');if(!matched.length){el.innerHTML='<p style="color:var(--muted);padding:12px">검색 결과가 없습니다.</p>';return;}el.innerHTML=matched.map(p=>{const pa=appts.filter(a=>a['환자번호']===p['환자번호']),pr=records.filter(r=>r['환자번호']===p['환자번호']),pb=billing.filter(b=>b['환자번호']===p['환자번호']),un=pb.filter(b=>b['납부상태']==='미납').length;return `<div class="search-result"><h3>👤 ${p['이름']} (${p['환자번호']})</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;font-size:.8rem"><div><span style="color:var(--muted)">생년월일</span> ${p['생년월일']}</div><div><span style="color:var(--muted)">성별</span> ${p['성별']}</div><div><span style="color:var(--muted)">연락처</span> ${p['연락처']}</div><div><span style="color:var(--muted)">이메일</span> ${p['이메일']}</div><div><span style="color:var(--muted)">혈액형</span> ${p['혈액형']}</div><div><span style="color:var(--muted)">보험</span> ${p['보험유형']}</div></div><div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap"><span class="badge badge-info">예약 ${pa.length}건</span><span class="badge badge-purple">진료기록 ${pr.length}건</span><span class="badge ${un>0?'badge-danger':'badge-ok'}">미납 ${un}건</span></div></div>`;}).join('');}
+function renderPatients(patients){document.getElementById('tbl-patients').innerHTML=`<table><thead><tr><th>환자번호</th><th>이름</th><th>생년월일</th><th>성별</th><th>연락처</th><th>이메일</th><th>혈액형</th><th>보험유형</th></tr></thead><tbody>${patients.map(r=>`<tr><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${r['환자번호']}</td><td style="font-weight:700">${r['이름']}</td><td>${r['생년월일']}</td><td>${r['성별']}</td><td style="font-family:'JetBrains Mono',monospace">${r['연락처']}</td><td style="color:var(--muted)">${r['이메일']}</td><td>${r['혈액형']}</td><td><span class="badge badge-info">${r['보험유형']}</span></td></tr>`).join('')}</tbody></table>`;}
+function renderRecords(records){document.getElementById('tbl-records').innerHTML=`<table><thead><tr><th>기록번호</th><th>환자명</th><th>의사번호</th><th>진료일</th><th>주증상</th><th>진단명</th><th>처방약</th><th>처방일수</th></tr></thead><tbody>${records.map(r=>`<tr><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${r['기록번호']}</td><td style="font-weight:700">${r['환자명']}</td><td style="color:var(--muted)">${r['의사번호']}</td><td style="font-family:'JetBrains Mono',monospace">${String(r['진료일']).slice(0,10)}</td><td>${r['주증상']}</td><td><span class="badge badge-purple">${r['진단명']}</span></td><td>${r['처방약']}</td><td style="text-align:center">${r['처방일수']}일</td></tr>`).join('')}</tbody></table>`;}
+function renderBilling(billing,unpaid){const tr=billing.reduce((s,r)=>s+(Number(r['본인부담금'])||0),0),pr=billing.filter(r=>r['납부상태']==='납부완료').reduce((s,r)=>s+(Number(r['본인부담금'])||0),0),ur=billing.filter(r=>r['납부상태']==='미납').reduce((s,r)=>s+(Number(r['본인부담금'])||0),0);document.getElementById('billing-kpi').innerHTML=[{label:'총 청구 금액',value:fmtW(tr),color:'#1F3864',icon:'💳'},{label:'납부 완료',value:fmtW(pr),color:'#1E6B3C',icon:'✅'},{label:'미납 금액',value:fmtW(ur),color:'#ef4444',icon:'⚠️'},{label:'미납 건수',value:fmt(unpaid.length)+'건',color:unpaid.length>0?'#ef4444':'#1E6B3C',icon:'📋'}].map(c=>`<div class="kpi-card" style="--kpi-color:${c.color}"><div class="kpi-icon">${c.icon}</div><div class="kpi-label">${c.label}</div><div class="kpi-value">${c.value}</div></div>`).join('');document.getElementById('tbl-unpaid').innerHTML=unpaid.length?`<table><thead><tr><th>청구번호</th><th>환자명</th><th>진료일</th><th>진료과</th><th>진료비</th><th>보험공제</th><th>본인부담금</th><th>상태</th></tr></thead><tbody>${unpaid.map(r=>`<tr><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${r['청구번호']}</td><td style="font-weight:700">${r['환자명']}</td><td>${String(r['진료일']).slice(0,10)}</td><td>${r['진료과']}</td><td>${fmtW(r['진료비'])}</td><td style="color:var(--muted)">${fmtW(r['보험공제'])}</td><td style="font-weight:700;color:#ef4444">${fmtW(r['본인부담금'])}</td><td><span class="badge badge-danger">미납</span></td></tr>`).join('')}</tbody></table>`:'<p style="color:var(--muted);padding:20px;text-align:center">미납 건수가 없습니다. ✅</p>';document.getElementById('tbl-billing').innerHTML=`<table><thead><tr><th>청구번호</th><th>환자명</th><th>진료일</th><th>진료과</th><th>진료비</th><th>보험공제</th><th>본인부담금</th><th>납부상태</th></tr></thead><tbody>${billing.map(r=>`<tr><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${r['청구번호']}</td><td style="font-weight:700">${r['환자명']}</td><td>${String(r['진료일']).slice(0,10)}</td><td>${r['진료과']}</td><td>${fmtW(r['진료비'])}</td><td style="color:var(--muted)">${fmtW(r['보험공제'])}</td><td style="font-weight:700">${fmtW(r['본인부담금'])}</td><td>${r['납부상태']==='납부완료'?'<span class="badge badge-ok">납부완료</span>':'<span class="badge badge-danger">미납</span>'}</td></tr>`).join('')}</tbody></table>`;}
+function exportCSV(type){let data,filename;if(type==='patients'){data=G.allPatients;filename='환자목록.csv';}else if(type==='records'){data=G.allRecords;filename='진료기록.csv';}else if(type==='billing'){data=G.allBilling;filename='청구내역.csv';}if(!data||!data.length)return alert('데이터가 없습니다.');const headers=Object.keys(data[0]);const csv='\uFEFF'+headers.join(',')+'\n'+data.map(r=>headers.map(h=>`"${String(r[h]||'').replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
+async function init(){try{const res=await fetch(WEB_APP_URL+'?action=all');const json=await res.json();if(json.status!=='ok')throw new Error(json.message||'데이터 오류');G=json.data;renderKPI(G.summary);lineChart('chartTrend',G.apptTrend.map(r=>r.date),[{label:'진료완료',data:G.apptTrend.map(r=>r['진료완료']||0)},{label:'예약완료',data:G.apptTrend.map(r=>r['예약완료']||0)},{label:'취소',data:G.apptTrend.map(r=>r['취소']||0)},{label:'노쇼',data:G.apptTrend.map(r=>r['노쇼']||0)}]);doughnutChart('chartStatus',G.apptByStatus.map(r=>r.status),G.apptByStatus.map(r=>r.count));barChart('chartDept',G.apptByDept.map(r=>r.dept),G.apptByDept.map(r=>r.count));barChart('chartDoctor',G.apptByDoctor.map(r=>r.doctor),G.apptByDoctor.map(r=>r.count),true);barChart('chartDiag',G.diagDistribution.map(r=>r.diagnosis),G.diagDistribution.map(r=>r.count),true);barChart('chartDrug',G.drugStats.map(r=>r.drug),G.drugStats.map(r=>r.count),true);barChart('chartAge',G.patientsByAge.map(r=>r.age),G.patientsByAge.map(r=>r.count));doughnutChart('chartGender',G.patientsByGender.map(r=>r.gender),G.patientsByGender.map(r=>r.count));revenueChart('chartRevenue',G.monthlyRevenue.map(r=>r.month),G.monthlyRevenue.map(r=>r.revenue));renderToday(G.todayAppts);renderCalendar();renderDoctors(G.doctorSchedule);renderPatients(G.allPatients);renderRecords(G.allRecords);renderBilling(G.allBilling,G.unpaidBills);document.getElementById('last-updated').textContent='업데이트: '+new Date().toLocaleTimeString('ko-KR');document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';}catch(err){showError('데이터 로딩 실패: '+err.message);}}
+function showError(msg){document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';const b=document.getElementById('error-banner');b.textContent=msg;b.style.display='block';}
+window.addEventListener('DOMContentLoaded',init);
+</script></body></html>
